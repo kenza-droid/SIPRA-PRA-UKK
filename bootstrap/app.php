@@ -13,6 +13,18 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->redirectTo(
+            guests: '/login',
+            users: function () {
+                if (auth()->check()) {
+                    return auth()->user()->isAdmin()
+                        ? route('admin.dashboard')
+                        : route('siswa.dashboard');
+                }
+                return '/login';
+            }
+        );
+
         // Register role middleware alias
         $middleware->alias([
             'role' => RoleMiddleware::class,

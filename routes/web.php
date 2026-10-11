@@ -13,7 +13,15 @@ use App\Http\Controllers\Siswa\ProfileController as SiswaProfileController;
 use Illuminate\Support\Facades\Route;
 
 // ── Root Redirect ────────────────────────────────────────────
-Route::get('/', fn () => redirect()->route('login'));
+Route::get('/', function () {
+    if (auth()->check()) {
+        return auth()->user()->isAdmin()
+            ? redirect()->route('admin.dashboard')
+            : redirect()->route('siswa.dashboard');
+    }
+
+    return redirect()->route('login');
+});
 
 // ── Auth ─────────────────────────────────────────────────────
 Route::middleware('guest')->group(function () {
@@ -70,6 +78,7 @@ Route::middleware(['auth', 'role:admin'])
         Route::prefix('aspirasi')->name('complaints.')->group(function () {
             Route::get('/', [AdminComplaintController::class, 'index'])->name('index');
             Route::get('/{complaint}', [AdminComplaintController::class, 'show'])->name('show');
+            Route::post('/{complaint}/action', [AdminComplaintController::class, 'processAction'])->name('action');
             Route::put('/{complaint}/status', [AdminComplaintController::class, 'updateStatus'])->name('status');
             Route::post('/{complaint}/feedback', [AdminComplaintController::class, 'addFeedback'])->name('feedback');
             Route::post('/{complaint}/progres', [AdminComplaintController::class, 'addProgress'])->name('progress');

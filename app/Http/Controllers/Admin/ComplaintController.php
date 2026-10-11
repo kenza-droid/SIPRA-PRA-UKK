@@ -87,6 +87,98 @@ class ComplaintController extends Controller
     }
 
     /**
+     * Proses tindak lanjut terpadu (Update Status + Progres + Umpan Balik dalam 1 aksi)
+     */
+    public function processAction(Request $request, Complaint $complaint)
+    {
+        $request->validate([
+            'status' => 'required|in:'.implode(',', array_keys(Complaint::STATUSES)),
+            'progress_percentage' => 'nullable|integer|min:0|max:100',
+            'message' => 'nullable|string|max:1000',
+            'feedback_type' => 'nullable|in:informasi,tindakan,penolakan,selesai',
+            'title' => 'nullable|string|max:200',
+            'work_date' => 'nullable|date',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:3072',
+        ], [
+            'status.required' => 'Pilih status aspirasi.',
+            'image.max' => 'Ukuran foto maksimal 3MB.',
+            'image.image' => 'File harus berupa gambar.',
+        ]);
+
+        $newStatus = $request->status;
+        $prevStatus = $complaint->status;
+        $statusChanged = $newStatus !== $prevStatus;
+
+        $progressPct = $request->filled('progress_percentage')
+            ? (int) $request->progress_percentage
+            : ($newStatus === 'selesai' ? 100 : $complaint->progress_percentage);
+
+        if ($newStatus === 'selesai') {
+            $progressPct = 100;
+        }
+
+        $note = $request->filled('message') ? $request->message : null;
+
+        // 1. Update Status (jika status berubah atau jika ada catatan)
+        if ($statusChanged || $note) {
+            $this->complaintService->updateStatus(
+                $complaint,
+                $newStatus,
+                Auth::user(),
+                $note
+            );
+            $this->notificationService->notifyStatusUpdated($complaint);
+        }
+
+        // 2. Tambah Umpan Balik (jika pesan diisi)
+        if ($request->filled('message')) {
+            $feedbackType = $request->feedback_type ?: match($newStatus) {
+                'ditolak' => 'penolakan',
+                'selesai' => 'selesai',
+                'diproses', 'dalam_perbaikan' => 'tindakan',
+                default => 'informasi',
+            };
+
+            $this->complaintService->addFeedback($complaint, Auth::user(), [
+                'message' => $request->message,
+                'type' => $feedbackType,
+            ]);
+            $this->notificationService->notifyFeedbackAdded($complaint);
+        }
+
+        // 3. Tambah Progres Perbaikan (jika persentase berubah, atau ada foto, atau ada judul progres)
+        $hasProgressUpdate = $request->hasFile('image')
+            || $request->filled('title')
+            || ($progressPct !== $complaint->progress_percentage)
+            || ($statusChanged && in_array($newStatus, ['dalam_perbaikan', 'selesai']));
+
+        if ($hasProgressUpdate) {
+            $progressTitle = $request->filled('title')
+                ? $request->title
+                : 'Status: ' . Complaint::STATUSES[$newStatus]['label'];
+
+            $progressDesc = $request->filled('message')
+                ? $request->message
+                : 'Pembaruan progres penanganan menjadi ' . $progressPct . '%.';
+
+            $this->complaintService->addProgress(
+                $complaint,
+                Auth::user(),
+                [
+                    'title' => $progressTitle,
+                    'description' => $progressDesc,
+                    'progress_percentage' => $progressPct,
+                    'work_date' => $request->work_date ?: now()->format('Y-m-d'),
+                ],
+                $request->file('image')
+            );
+            $this->notificationService->notifyProgressAdded($complaint);
+        }
+
+        return back()->with('success', 'Tindak lanjut berhasil disimpan. Status, progres, dan umpan balik diperbarui sekaligus.');
+    }
+
+    /**
      * Update status aspirasi
      */
     public function updateStatus(Request $request, Complaint $complaint)

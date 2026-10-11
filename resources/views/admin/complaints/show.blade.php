@@ -162,198 +162,184 @@
     </div>
 
     {{-- ══════════════════════════════════════════════════════════
-         KOLOM KANAN — Management Panel
+         KOLOM KANAN — Unified Management Panel
     ══════════════════════════════════════════════════════════ --}}
-    <div class="space-y-5" x-data="{ activePanel: 'status' }">
+    <div class="space-y-5"
+         x-data="{
+             selectedStatus: '{{ old('status', $complaint->status) }}',
+             pct: {{ old('progress_percentage', $complaint->progress_percentage) }},
+             message: '{{ old('message', '') }}',
+             feedbackType: '{{ old('feedback_type', 'informasi') }}',
+             msgLen: {{ strlen(old('message', '')) }},
+             showDoc: {{ old('title') || old('image') ? 'true' : 'false' }},
+             onStatusChange(val) {
+                 this.selectedStatus = val;
+                 if (val === 'selesai') {
+                     this.pct = 100;
+                     this.feedbackType = 'selesai';
+                 } else if (val === 'dalam_perbaikan') {
+                     if (this.pct < 50) this.pct = 50;
+                     this.feedbackType = 'tindakan';
+                 } else if (val === 'diproses') {
+                     if (this.pct < 25) this.pct = 25;
+                     this.feedbackType = 'tindakan';
+                 } else if (val === 'ditolak') {
+                     this.feedbackType = 'penolakan';
+                 } else if (val === 'ditinjau') {
+                     this.feedbackType = 'informasi';
+                 }
+             }
+         }">
 
-        {{-- Panel tabs --}}
-        <div class="flex gap-1 rounded-xl bg-slate-100 p-1">
-            @foreach([['status','Update Status'],['feedback','Umpan Balik'],['progress','Tambah Progres']] as [$tab,$label])
-                <button type="button"
-                        @click="activePanel = '{{ $tab }}'"
-                        :class="activePanel === '{{ $tab }}' ? 'bg-white text-primary-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
-                        class="flex-1 rounded-lg py-2 text-xs font-semibold transition-all">
-                    {{ $label }}
-                </button>
-            @endforeach
-        </div>
+        <x-card title="Tindak Lanjut Aspirasi" subtitle="Perbarui status, progres, dan umpan balik siswa dalam satu langkah">
+            <form method="POST" action="{{ route('admin.complaints.action', $complaint) }}" enctype="multipart/form-data">
+                @csrf
 
-        {{-- ── Panel: Update Status ─────────────────────────── --}}
-        <div x-show="activePanel === 'status'" x-cloak
-             x-transition:enter="transition ease-out duration-200"
-             x-transition:enter-start="opacity-0 translate-y-1"
-             x-transition:enter-end="opacity-100 translate-y-0">
-            <x-card title="Update Status Aspirasi">
-                <form method="POST" action="{{ route('admin.complaints.status', $complaint) }}"
-                      x-data="{ selectedStatus: '{{ $complaint->status }}' }">
-                    @csrf
-                    @method('PUT')
-
-                    {{-- Current status indicator --}}
-                    <div class="mb-4 flex items-center gap-2 rounded-xl bg-slate-50 p-3">
-                        <p class="text-xs text-slate-500">Status saat ini:</p>
-                        <x-status-badge :status="$complaint->status" />
+                {{-- 1. Pilihan Status --}}
+                <div class="mb-5">
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="text-xs font-bold uppercase tracking-wider text-slate-700">
+                            1. Status Aspirasi <span class="text-red-500">*</span>
+                        </label>
+                        <span class="text-[11px] text-slate-400">Pilih status terbaru</span>
                     </div>
 
-                    <div class="mb-4 space-y-2">
+                    <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
                         @foreach(\App\Models\Complaint::STATUSES as $key => $cfg)
-                            <label class="flex cursor-pointer items-center gap-3 rounded-xl border-2 p-3.5 transition-all"
+                            <label class="flex cursor-pointer items-center justify-between rounded-xl border-2 p-2.5 transition-all text-left"
                                    :class="selectedStatus === '{{ $key }}'
-                                       ? 'border-primary-400 bg-primary-50/60'
+                                       ? 'border-primary-500 bg-primary-50/70 shadow-sm ring-1 ring-primary-500'
                                        : 'border-slate-100 hover:border-slate-200 bg-white'">
-                                <input type="radio" name="status" value="{{ $key }}"
-                                       x-model="selectedStatus"
-                                       class="text-primary-600 focus:ring-primary-400">
-                                <span class="flex-1">
-                                    <x-status-badge :status="$key" />
-                                </span>
-                            </label>
-                        @endforeach
-                    </div>
-
-                    <x-form-input name="note" label="Catatan (opsional)">
-                        <textarea name="note" rows="2" maxlength="500"
-                                  placeholder="Tambahkan catatan perubahan status..."
-                                  class="w-full resize-none rounded-xl border-[1.5px] border-slate-200 bg-slate-50 px-4 py-2.5 text-sm focus:border-primary-400 focus:bg-white focus:outline-none focus:ring-3 focus:ring-primary-100">{{ old('note') }}</textarea>
-                    </x-form-input>
-
-                    <button type="submit"
-                            class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-primary-700 transition-colors">
-                        @include('layouts.icons', ['icon' => 'arrow-path', 'class' => 'h-4 w-4'])
-                        Perbarui Status
-                    </button>
-                </form>
-            </x-card>
-        </div>
-
-        {{-- ── Panel: Umpan Balik ───────────────────────────── --}}
-        <div x-show="activePanel === 'feedback'" x-cloak
-             x-transition:enter="transition ease-out duration-200"
-             x-transition:enter-start="opacity-0 translate-y-1"
-             x-transition:enter-end="opacity-100 translate-y-0">
-            <x-card title="Berikan Umpan Balik">
-                <form method="POST" action="{{ route('admin.complaints.feedback', $complaint) }}"
-                      x-data="{ msgLen: 0 }">
-                    @csrf
-
-                    <div class="mb-4 space-y-2">
-                        <p class="text-xs font-medium text-slate-600 mb-1.5">Tipe Umpan Balik</p>
-                        @foreach(\App\Models\Feedback::TYPES as $key => $cfg)
-                            <label class="flex cursor-pointer items-center gap-3 rounded-xl border-[1.5px] border-slate-100 p-3 hover:border-slate-200 transition-colors">
-                                <input type="radio" name="type" value="{{ $key }}"
-                                       {{ old('type', 'informasi') === $key ? 'checked' : '' }}
-                                       class="text-primary-600 focus:ring-primary-400">
-                                <span class="rounded-full px-2.5 py-1 text-xs font-semibold
-                                    {{ match($key) {
-                                        'informasi' => 'bg-blue-100 text-blue-700',
-                                        'tindakan'  => 'bg-green-100 text-green-700',
-                                        'penolakan' => 'bg-red-100 text-red-700',
-                                        'selesai'   => 'bg-emerald-100 text-emerald-700',
-                                        default     => 'bg-gray-100 text-gray-700',
-                                    } }}">{{ $cfg['label'] }}</span>
-                                <span class="text-xs text-slate-500">{{ match($key) {
-                                    'informasi' => 'Memberikan informasi tambahan',
-                                    'tindakan'  => 'Menyatakan tindakan yang diambil',
-                                    'penolakan' => 'Menolak atau tidak bisa ditangani',
-                                    'selesai'   => 'Konfirmasi selesai',
-                                    default     => '',
-                                } }}</span>
-                            </label>
-                        @endforeach
-                    </div>
-
-                    <x-form-input name="message" label="Isi Umpan Balik" :required="true">
-                        <textarea name="message" rows="5" maxlength="1000"
-                                  @input="msgLen = $event.target.value.length"
-                                  placeholder="Tuliskan umpan balik yang jelas dan informatif untuk siswa..."
-                                  class="w-full resize-none rounded-xl border-[1.5px] border-slate-200 bg-slate-50 px-4 py-2.5 text-sm focus:border-primary-400 focus:bg-white focus:outline-none focus:ring-3 focus:ring-primary-100 @error('message') border-red-400 @enderror">{{ old('message') }}</textarea>
-                        <div class="mt-1 flex justify-end">
-                            <span class="text-xs text-slate-400" x-text="msgLen + '/1000'"></span>
-                        </div>
-                    </x-form-input>
-
-                    <button type="submit"
-                            class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-primary-700 transition-colors">
-                        @include('layouts.icons', ['icon' => 'chat-bubble-left-right', 'class' => 'h-4 w-4'])
-                        Kirim Umpan Balik
-                    </button>
-                </form>
-            </x-card>
-        </div>
-
-        {{-- ── Panel: Tambah Progres ────────────────────────── --}}
-        <div x-show="activePanel === 'progress'" x-cloak
-             x-transition:enter="transition ease-out duration-200"
-             x-transition:enter-start="opacity-0 translate-y-1"
-             x-transition:enter-end="opacity-100 translate-y-0">
-            <x-card title="Tambah Progres Perbaikan">
-                <form method="POST" action="{{ route('admin.complaints.progress', $complaint) }}"
-                      enctype="multipart/form-data"
-                      x-data="{ pct: {{ $complaint->progress_percentage }}, descLen: 0 }">
-                    @csrf
-
-                    <div class="mb-4 space-y-4">
-
-                        <x-form-input name="title" label="Judul Progres" :required="true">
-                            <input type="text" name="title" value="{{ old('title') }}"
-                                   placeholder="cth: Pengecekan Lapangan Selesai"
-                                   class="w-full rounded-xl border-[1.5px] border-slate-200 bg-slate-50 px-4 py-2.5 text-sm focus:border-primary-400 focus:bg-white focus:outline-none focus:ring-3 focus:ring-primary-100 @error('title') border-red-400 @enderror">
-                        </x-form-input>
-
-                        {{-- Percentage slider --}}
-                        <div>
-                            <div class="flex items-center justify-between mb-1.5">
-                                <label class="text-sm font-medium text-slate-700">
-                                    Persentase Progres <span class="text-red-500">*</span>
-                                </label>
-                                <div class="flex items-center gap-1.5 rounded-lg bg-primary-50 px-2.5 py-1">
-                                    <input type="number" name="progress_percentage" x-model="pct"
-                                           min="0" max="100"
-                                           class="w-12 bg-transparent text-center text-sm font-bold text-primary-700 focus:outline-none">
-                                    <span class="text-sm font-bold text-primary-600">%</span>
+                                <div class="flex items-center gap-2 min-w-0">
+                                    <input type="radio" name="status" value="{{ $key }}"
+                                           @change="onStatusChange('{{ $key }}')"
+                                           :checked="selectedStatus === '{{ $key }}'"
+                                           class="text-primary-600 focus:ring-primary-400">
+                                    <span class="truncate text-xs font-semibold
+                                        {{ match($key) {
+                                            'menunggu'        => 'text-amber-700',
+                                            'ditinjau'        => 'text-sky-700',
+                                            'diproses'        => 'text-purple-700',
+                                            'dalam_perbaikan' => 'text-orange-700',
+                                            'selesai'         => 'text-emerald-700',
+                                            'ditolak'         => 'text-red-700',
+                                            default           => 'text-slate-700',
+                                        } }}">{{ $cfg['label'] }}</span>
                                 </div>
-                            </div>
-                            <input type="range" x-model="pct" min="0" max="100" step="5"
-                                   class="w-full accent-primary-600 cursor-pointer">
-                            <div class="mt-2">
-                                <x-progress-bar :percentage="0" :show-label="false" size="sm" />
-                            </div>
-                            {{-- Real visual progress synced with Alpine --}}
-                            <div class="mt-1 h-2 w-full overflow-hidden rounded-full bg-slate-100">
-                                <div class="h-full rounded-full bg-primary-500 transition-all duration-300"
-                                     :style="'width:' + pct + '%'"></div>
-                            </div>
+                            </label>
+                        @endforeach
+                    </div>
+                </div>
+
+                {{-- 2. Persentase Progres --}}
+                <div class="mb-5 rounded-xl border border-slate-100 bg-slate-50/60 p-3.5">
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="text-xs font-bold uppercase tracking-wider text-slate-700">
+                            2. Persentase Progres
+                        </label>
+                        <div class="flex items-center gap-1.5 rounded-lg bg-white border border-slate-200 px-2 py-0.5 shadow-2xs">
+                            <input type="number" name="progress_percentage" x-model="pct"
+                                   min="0" max="100"
+                                   class="w-10 bg-transparent text-center text-xs font-bold text-primary-700 focus:outline-none">
+                            <span class="text-xs font-bold text-primary-600">%</span>
                         </div>
+                    </div>
+                    <input type="range" x-model="pct" min="0" max="100" step="5"
+                           class="w-full accent-primary-600 cursor-pointer">
+                    <div class="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-200">
+                        <div class="h-full rounded-full bg-primary-600 transition-all duration-200"
+                             :style="'width:' + pct + '%'"></div>
+                    </div>
+                    <div class="mt-1.5 flex justify-between text-[10px] text-slate-400">
+                        <span>0% (Awal)</span>
+                        <span>50% (Pengerjaan)</span>
+                        <span>100% (Selesai)</span>
+                    </div>
+                </div>
 
-                        <x-form-input name="description" label="Deskripsi" :required="true">
-                            <textarea name="description" rows="3" maxlength="1000"
-                                      @input="descLen = $event.target.value.length"
-                                      placeholder="Jelaskan progres perbaikan yang telah dilakukan..."
-                                      class="w-full resize-none rounded-xl border-[1.5px] border-slate-200 bg-slate-50 px-4 py-2.5 text-sm focus:border-primary-400 focus:bg-white focus:outline-none focus:ring-3 focus:ring-primary-100 @error('description') border-red-400 @enderror">{{ old('description') }}</textarea>
-                            <div class="mt-1 flex justify-end">
-                                <span class="text-xs text-slate-400" x-text="descLen + '/1000'"></span>
-                            </div>
-                        </x-form-input>
-
-                        <x-form-input name="work_date" label="Tanggal Pengerjaan">
-                            <input type="date" name="work_date" value="{{ old('work_date', today()->format('Y-m-d')) }}"
-                                   class="w-full rounded-xl border-[1.5px] border-slate-200 bg-slate-50 px-4 py-2.5 text-sm focus:border-primary-400 focus:bg-white focus:outline-none focus:ring-3 focus:ring-primary-100">
-                        </x-form-input>
-
-                        <x-form-input name="image" label="Foto Dokumentasi (opsional)">
-                            <input type="file" name="image" accept="image/*"
-                                   class="w-full rounded-xl border-[1.5px] border-slate-200 bg-slate-50 px-4 py-2.5 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-primary-50 file:px-3 file:py-1 file:text-xs file:font-semibold file:text-primary-700 hover:file:bg-primary-100 focus:outline-none">
-                        </x-form-input>
+                {{-- 3. Umpan Balik / Catatan untuk Siswa --}}
+                <div class="mb-5">
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="text-xs font-bold uppercase tracking-wider text-slate-700">
+                            3. Pesan & Umpan Balik ke Siswa
+                        </label>
+                        <span class="text-[11px] text-slate-400">Opsional / Disarankan</span>
                     </div>
 
-                    <button type="submit"
-                            class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-primary-700 transition-colors">
-                        @include('layouts.icons', ['icon' => 'chart-bar', 'class' => 'h-4 w-4'])
-                        Simpan Progres
+                    {{-- Pilihan Tipe Umpan Balik --}}
+                    <div class="mb-2 flex flex-wrap gap-1.5">
+                        @foreach(\App\Models\Feedback::TYPES as $key => $cfg)
+                            <label class="flex cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs transition-colors"
+                                   :class="feedbackType === '{{ $key }}' ? 'border-primary-500 bg-primary-50 text-primary-700 font-semibold' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'">
+                                <input type="radio" name="feedback_type" value="{{ $key }}"
+                                       x-model="feedbackType" class="sr-only">
+                                <span>{{ $cfg['label'] }}</span>
+                            </label>
+                        @endforeach
+                    </div>
+
+                    <textarea name="message" rows="3" maxlength="1000"
+                              x-model="message"
+                              @input="msgLen = $event.target.value.length"
+                              placeholder="Tuliskan catatan, tanggapan, atau perkembangan yang akan dibaca oleh siswa..."
+                              class="w-full resize-none rounded-xl border-[1.5px] border-slate-200 bg-slate-50 px-4 py-2.5 text-sm focus:border-primary-400 focus:bg-white focus:outline-none focus:ring-3 focus:ring-primary-100"></textarea>
+                    <div class="mt-1 flex justify-end">
+                        <span class="text-[11px] text-slate-400" x-text="msgLen + '/1000'"></span>
+                    </div>
+                </div>
+
+                {{-- 4. Dokumentasi & Foto Bukti (Opsional / Collapse) --}}
+                <div class="mb-5 rounded-xl border border-slate-200/80 bg-white p-3.5">
+                    <button type="button" @click="showDoc = !showDoc"
+                            class="flex w-full items-center justify-between text-left">
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                            <svg class="h-4 w-4 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z"/>
+                            </svg>
+                            Foto &amp; Dokumentasi Perbaikan
+                            <span class="text-[10px] font-normal normal-case text-slate-400">(opsional)</span>
+                        </span>
+                        <svg class="h-4 w-4 text-slate-400 transition-transform duration-200"
+                             :class="showDoc ? 'rotate-180' : ''"
+                             fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/>
+                        </svg>
                     </button>
-                </form>
-            </x-card>
-        </div>
+
+                    <div x-show="showDoc" x-cloak class="mt-3 space-y-3 pt-3 border-t border-slate-100">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Judul Kegiatan / Progres</label>
+                            <input type="text" name="title" value="{{ old('title') }}"
+                                   placeholder="cth: Penggantian komponen proyektor selesai"
+                                   class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs focus:border-primary-400 focus:bg-white focus:outline-none">
+                        </div>
+
+                        <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-600 mb-1">Tanggal Pengerjaan</label>
+                                <input type="date" name="work_date" value="{{ old('work_date', today()->format('Y-m-d')) }}"
+                                       class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs focus:border-primary-400 focus:bg-white focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-600 mb-1">Foto Hasil / Bukti</label>
+                                <input type="file" name="image" accept="image/*"
+                                       class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs file:mr-2 file:rounded-md file:border-0 file:bg-primary-50 file:px-2 file:py-1 file:text-[11px] file:font-semibold file:text-primary-700 hover:file:bg-primary-100 focus:outline-none">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Tombol Simpan Terpadu --}}
+                <button type="submit"
+                        class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary-600 px-5 py-3 text-sm font-bold text-white shadow-md shadow-primary-200 hover:bg-primary-700 active:scale-[0.99] transition-all">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
+                    </svg>
+                    Simpan &amp; Perbarui Aspirasi
+                </button>
+            </form>
+        </x-card>
 
         {{-- Progress summary --}}
         <x-card title="Progress Saat Ini">

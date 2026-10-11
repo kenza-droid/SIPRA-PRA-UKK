@@ -2,9 +2,9 @@
 
     {{-- Brand --}}
     <div class="flex h-16 flex-shrink-0 items-center gap-3 px-5 border-b border-slate-100">
-        <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary-600 to-primary-500 shadow-lg shadow-primary-200">
-            <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+        <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 shadow-md shadow-indigo-200">
+            <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21.25l2.255-3.633a1.15 1.15 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
             </svg>
         </div>
         <div>
@@ -17,16 +17,8 @@
         </button>
     </div>
 
-    {{-- Role badge --}}
-    <div class="px-4 pt-4 pb-2">
-        <span class="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold {{ $isAdmin ? 'bg-primary-50 text-primary-700' : 'bg-emerald-50 text-emerald-700' }}">
-            <span class="h-1.5 w-1.5 rounded-full {{ $isAdmin ? 'bg-primary-500' : 'bg-emerald-500' }}"></span>
-            {{ $isAdmin ? 'Administrator' : 'Siswa' }}
-        </span>
-    </div>
-
     {{-- Navigation --}}
-    <nav class="flex-1 space-y-0.5 px-3 py-2">
+    <nav class="flex-1 space-y-0.5 px-3 py-2 mt-4">
         @foreach($navItems as $item)
             @php
                 $currentRoute = Route::currentRouteName() ?? '';

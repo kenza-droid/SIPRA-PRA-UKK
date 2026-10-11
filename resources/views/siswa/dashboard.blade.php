@@ -8,31 +8,63 @@
 @php $user = auth()->user(); @endphp
 
 {{-- ── Welcome Banner ─────────────────────────────────────────── --}}
-<div class="mb-6 overflow-hidden rounded-2xl bg-gradient-to-r from-primary-600 via-primary-500 to-indigo-500 p-6 shadow-lg shadow-primary-200/40">
-    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-            <h2 class="text-xl font-bold text-white">
-                Selamat datang, {{ $user->name }}! 
-            </h2>
-            <p class="mt-1 text-sm text-indigo-100">
+<div class="relative mb-6 overflow-hidden rounded-3xl bg-gradient-to-r from-[#3151eb] via-[#4364f7] to-[#6fb1fc] shadow-xl shadow-indigo-900/10 min-h-[175px] sm:min-h-[195px] flex items-center">
+
+    {{-- Subtle decorative glow / backdrop --}}
+    <div class="absolute -top-24 -left-24 h-64 w-64 rounded-full bg-white/10 blur-3xl pointer-events-none"></div>
+
+    <div class="relative z-10 w-full flex flex-col justify-between p-6 sm:p-7 sm:py-8 lg:flex-row lg:items-center">
+        
+        {{-- Left: Text & Class Info --}}
+        <div class="max-w-md lg:max-w-lg z-10">
+            <p class="text-sm font-medium text-white/90">
+                Selamat datang,
+            </p>
+            <h1 class="mt-0.5 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+                {{ $user->name }}!
+            </h1>
+            <p class="mt-1.5 text-xs text-indigo-100 sm:text-sm leading-relaxed max-w-sm sm:max-w-md">
                 Pantau aspirasi dan progres perbaikan sarana sekolah dalam satu tempat.
             </p>
             @if($user->class)
-                <div class="mt-3 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold text-white ring-1 ring-white/20">
-                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.438 60.438 0 00-.491 6.347A48.62 48.62 0 0112 20.904a48.62 48.62 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.636 50.636 0 00-2.658-.813A59.906 59.906 0 0112 3.493a59.903 59.903 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5"/></svg>
+                <div class="mt-3.5 inline-flex items-center gap-1.5 rounded-full bg-white/20 backdrop-blur-md px-3.5 py-1 text-xs font-semibold text-white ring-1 ring-white/30 shadow-xs">
+                    <svg class="h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.438 60.438 0 00-.491 6.347A48.62 48.62 0 0112 20.904a48.62 48.62 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.636 50.636 0 00-2.658-.813A59.906 59.906 0 0112 3.493a59.903 59.903 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5"/>
+                    </svg>
                     Kelas {{ $user->class }}
                 </div>
             @endif
         </div>
-        <div class="flex-shrink-0">
-            <a href="{{ route('siswa.complaints.create') }}"
-               class="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-primary-700 shadow-md hover:bg-primary-50 transition-colors">
-                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+
+        {{-- Right: Handwritten Motto & Ray Details --}}
+        <div class="hidden lg:flex relative z-10 flex-col items-center justify-center text-center pr-2 xl:pr-6 select-none shrink-0">
+            <div class="relative font-handwriting text-2xl xl:text-3xl leading-snug font-bold text-white/95 drop-shadow-sm">
+                {{-- Left ray lines --}}
+                <svg class="absolute -left-6 top-1/2 -translate-y-1/2 h-10 w-5 text-white/80" viewBox="0 0 20 40" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                    <line x1="16" y1="6" x2="4" y2="10" />
+                    <line x1="18" y1="20" x2="2" y2="20" />
+                    <line x1="16" y1="34" x2="4" y2="30" />
                 </svg>
-                Buat Aspirasi
-            </a>
+
+                <p class="italic tracking-wide">Suara kamu</p>
+                <p class="italic tracking-wide">untuk sekolah</p>
+                <p class="italic tracking-wide">yang lebih baik</p>
+
+                {{-- Right ray lines --}}
+                <svg class="absolute -right-6 top-1/2 -translate-y-1/2 h-10 w-5 text-white/80" viewBox="0 0 20 40" fill="none" stroke-width="2.5" stroke-currentColor" stroke-linecap="round">
+                    <line x1="4" y1="6" x2="16" y2="10" />
+                    <line x1="2" y1="20" x2="18" y2="20" />
+                    <line x1="4" y1="34" x2="16" y2="30" />
+                </svg>
+            </div>
         </div>
+    </div>
+
+    {{-- Center / Center-Right: School Building Image --}}
+    <div class="pointer-events-none select-none absolute bottom-0 right-4 sm:right-16 md:right-36 lg:right-56 xl:right-64 h-[155px] sm:h-[180px] md:h-[200px] z-0 opacity-55">
+        <img src="{{ asset('asset/scool.png') }}"
+             alt="Ilustrasi Sekolah"
+             class="h-full w-auto object-contain object-bottom drop-shadow-sm">
     </div>
 </div>
 
