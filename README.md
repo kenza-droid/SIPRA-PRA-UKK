@@ -401,5 +401,5 @@ Proyek ini dibuat untuk keperluan **Uji Kompetensi Keahlian (UKK)** bidang Rekay
 ---
 
 <p align="center">
-  Dibuat dengan ❤️ menggunakan Laravel + Tailwind CSS
+  Dibuat dengan menggunakan Laravel + Tailwind CSS
 </p>
