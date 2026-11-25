@@ -23,18 +23,18 @@
 @endphp
 
 {{-- Desktop Sidebar --}}
-<aside class="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col bg-white border-r border-slate-100 shadow-sm lg:flex">
+<aside class="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col bg-white border-r border-slate-200/70 lg:flex">
     @include('layouts.sidebar-content', ['navItems' => $navItems, 'isAdmin' => $isAdmin])
 </aside>
 
 {{-- Mobile Sidebar --}}
-<aside class="fixed inset-y-0 left-0 z-30 w-72 flex-col bg-white border-r border-slate-100 shadow-xl lg:hidden flex"
+<aside class="fixed inset-y-0 left-0 z-30 w-72 flex-col bg-white border-r border-slate-200/70 shadow-xl lg:hidden flex"
        x-show="sidebarOpen"
        x-cloak
-       x-transition:enter="transition ease-out duration-250"
+       x-transition:enter="transition ease-out duration-250 motion-reduce:transition-none"
        x-transition:enter-start="-translate-x-full"
        x-transition:enter-end="translate-x-0"
-       x-transition:leave="transition ease-in duration-200"
+       x-transition:leave="transition ease-in duration-200 motion-reduce:transition-none"
        x-transition:leave-start="translate-x-0"
        x-transition:leave-end="-translate-x-full">
     @include('layouts.sidebar-content', ['navItems' => $navItems, 'isAdmin' => $isAdmin])

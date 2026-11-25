@@ -10,6 +10,7 @@ use App\Models\Feedback;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class ComplaintService
 {
@@ -138,6 +139,28 @@ class ComplaintService
             );
 
             return $progress;
+        });
+    }
+
+    /**
+     * Hapus koleksi aspirasi beserta file gambarnya.
+     */
+    public function bulkDelete($complaints): int
+    {
+        return DB::transaction(function () use ($complaints) {
+            $count = 0;
+            foreach ($complaints as $complaint) {
+                // Hapus berkas fisik gambar dari storage jika ada
+                foreach ($complaint->images as $image) {
+                    if ($image->image_path && Storage::disk('public')->exists($image->image_path)) {
+                        Storage::disk('public')->delete($image->image_path);
+                    }
+                }
+                $complaint->delete();
+                $count++;
+            }
+
+            return $count;
         });
     }
 

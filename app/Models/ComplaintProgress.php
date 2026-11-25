@@ -34,7 +34,18 @@ class ComplaintProgress extends Model
 
     public function getImageUrlAttribute(): ?string
     {
-        return $this->image_path ? Storage::url($this->image_path) : null;
+        if (empty($this->image_path)) {
+            return null;
+        }
+
+        if (filter_var($this->image_path, FILTER_VALIDATE_URL)) {
+            return $this->image_path;
+        }
+
+        $path = ltrim($this->image_path, '/');
+        $path = preg_replace('#^(public/|storage/)+#', '', $path);
+
+        return '/storage/' . $path;
     }
 
     public function getProgressBarColorAttribute(): string

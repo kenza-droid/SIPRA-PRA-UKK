@@ -26,6 +26,22 @@ class Feedback extends Model
 
     // ─── Helpers ─────────────────────────────────────────────
 
+    public function getImageUrlAttribute(): ?string
+    {
+        if (empty($this->image_path)) {
+            return null;
+        }
+
+        if (filter_var($this->image_path, FILTER_VALIDATE_URL)) {
+            return $this->image_path;
+        }
+
+        $path = ltrim($this->image_path, '/');
+        $path = preg_replace('#^(public/|storage/)+#', '', $path);
+
+        return '/storage/' . $path;
+    }
+
     public function getTypeConfigAttribute(): array
     {
         return self::TYPES[$this->type] ?? ['label' => $this->type, 'color' => 'gray', 'icon' => 'chat-bubble-left'];

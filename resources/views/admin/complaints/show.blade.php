@@ -16,7 +16,7 @@
     <x-priority-badge :priority="$complaint->priority" size="lg" />
 </x-page-header>
 
-<div class="grid grid-cols-1 gap-6 xl:grid-cols-3">
+<div class="grid grid-cols-1 gap-6 xl:grid-cols-3" x-data="{ activePhoto: null, activePhotoName: '' }">
 
     {{-- ══════════════════════════════════════════════════════════
          KOLOM KIRI — Informasi Aspirasi
@@ -27,11 +27,11 @@
         <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
             @foreach([
                 ['label' => 'Siswa',    'value' => $complaint->user->name,     'sub' => $complaint->user->class],
-                ['label' => 'NISN',     'value' => $complaint->user->nisn ?? '—', 'mono' => true],
+                ['label' => 'NISN',     'value' => $complaint->user->nisn ?? '—', 'sub' => $complaint->user->phone ? 'Telp: ' . $complaint->user->phone : null, 'mono' => true],
                 ['label' => 'Kategori', 'value' => $complaint->category->name],
                 ['label' => 'Lokasi',   'value' => $complaint->location],
             ] as $info)
-                <div class="rounded-xl bg-white p-3.5 shadow-sm ring-1 ring-slate-100">
+                <div class="rounded-xl bg-white p-3.5 border border-slate-200/75 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
                     <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{{ $info['label'] }}</p>
                     <p class="mt-1 truncate text-sm font-semibold text-slate-800 {{ ($info['mono'] ?? false) ? 'font-mono' : '' }}">{{ $info['value'] }}</p>
                     @if(isset($info['sub']))
@@ -51,18 +51,19 @@
         {{-- Foto --}}
         @if($complaint->images->isNotEmpty())
             <x-card title="Foto Bukti" :subtitle="$complaint->images->count() . ' foto'">
-                <div class="grid grid-cols-3 gap-3 sm:grid-cols-4">
+                <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
                     @foreach($complaint->images as $img)
-                        <a href="{{ $img->url }}" target="_blank"
-                           class="group relative aspect-video overflow-hidden rounded-xl bg-slate-100 ring-1 ring-slate-200 hover:ring-primary-300 transition-all">
+                        <button type="button"
+                                @click="activePhoto = @js($img->url); activePhotoName = @js($img->original_name); $dispatch('open-modal', { id: 'admin-photo-lightbox' })"
+                                class="group relative aspect-video overflow-hidden rounded-xl bg-slate-100 ring-1 ring-slate-200 hover:ring-primary-300 active:scale-[0.98] transition-all duration-150">
                             <img src="{{ $img->url }}" alt="{{ $img->original_name }}"
-                                 class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105">
+                                 class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105 motion-reduce:transform-none">
                             <div class="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/20 transition-colors">
                                 <svg class="h-7 w-7 text-white opacity-0 drop-shadow-lg group-hover:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607zM10.5 7.5v6m3-3h-6"/>
                                 </svg>
                             </div>
-                        </a>
+                        </button>
                     @endforeach
                 </div>
             </x-card>
@@ -87,6 +88,20 @@
                                 </span>
                             </div>
                             <p class="mt-2.5 text-sm text-slate-700 leading-relaxed">{{ $fb->message }}</p>
+                            @if(!empty($fb->image_url))
+                                <div class="mt-2.5 pt-2.5 border-t border-slate-100">
+                                    <button type="button"
+                                            @click="activePhoto = @js($fb->image_url); activePhotoName = @js('Lampiran Umpan Balik: ' . $fb->admin->name); $dispatch('open-modal', { id: 'admin-photo-lightbox' })"
+                                            class="group relative block aspect-video max-w-xs overflow-hidden rounded-xl bg-slate-100 ring-1 ring-slate-200 hover:ring-primary-400 active:scale-[0.98] transition-all">
+                                        <img src="{{ $fb->image_url }}" alt="Lampiran umpan balik" class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105 motion-reduce:transform-none">
+                                        <div class="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/25 transition-colors">
+                                            <svg class="h-6 w-6 text-white opacity-0 drop-shadow-md group-hover:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607zM10.5 7.5v6m3-3h-6"/>
+                                            </svg>
+                                        </div>
+                                    </button>
+                                </div>
+                            @endif
                         </div>
                     @endforeach
                 </div>
@@ -113,6 +128,20 @@
                                 <div class="mt-2">
                                     <x-progress-bar :percentage="$p->progress_percentage" :show-label="false" size="sm" />
                                 </div>
+                                @if($p->image_url)
+                                    <div class="mt-2.5">
+                                        <button type="button"
+                                                @click="activePhoto = @js($p->image_url); activePhotoName = @js('Dokumentasi Progres: ' . $p->title); $dispatch('open-modal', { id: 'admin-photo-lightbox' })"
+                                                class="group relative block aspect-video max-w-xs overflow-hidden rounded-xl bg-slate-200 ring-1 ring-slate-200 hover:ring-primary-400 active:scale-[0.98] transition-all">
+                                            <img src="{{ $p->image_url }}" alt="{{ $p->title }}" class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105 motion-reduce:transform-none">
+                                            <div class="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/25 transition-colors">
+                                                <svg class="h-6 w-6 text-white opacity-0 drop-shadow-md group-hover:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607zM10.5 7.5v6m3-3h-6"/>
+                                                </svg>
+                                            </div>
+                                        </button>
+                                    </div>
+                                @endif
                                 <p class="mt-1.5 text-[10px] text-slate-400">
                                     {{ $p->creator->name }}
                                     @if($p->work_date) · {{ $p->work_date->format('d M Y') }} @endif
@@ -168,10 +197,11 @@
          x-data="{
              selectedStatus: '{{ old('status', $complaint->status) }}',
              pct: {{ old('progress_percentage', $complaint->progress_percentage) }},
-             message: '{{ old('message', '') }}',
+             message: @js(old('message', '')),
              feedbackType: '{{ old('feedback_type', 'informasi') }}',
              msgLen: {{ strlen(old('message', '')) }},
              showDoc: {{ old('title') || old('image') ? 'true' : 'false' }},
+             submitting: false,
              onStatusChange(val) {
                  this.selectedStatus = val;
                  if (val === 'selesai') {
@@ -192,7 +222,8 @@
          }">
 
         <x-card title="Tindak Lanjut Aspirasi" subtitle="Perbarui status, progres, dan umpan balik siswa dalam satu langkah">
-            <form method="POST" action="{{ route('admin.complaints.action', $complaint) }}" enctype="multipart/form-data">
+            <form method="POST" action="{{ route('admin.complaints.action', $complaint) }}" enctype="multipart/form-data"
+                  @submit="submitting = true">
                 @csrf
 
                 {{-- 1. Pilihan Status --}}
@@ -307,7 +338,14 @@
                         </svg>
                     </button>
 
-                    <div x-show="showDoc" x-cloak class="mt-3 space-y-3 pt-3 border-t border-slate-100">
+                    <div x-show="showDoc" x-cloak
+                         x-transition:enter="transition ease-out duration-200 motion-reduce:transition-none"
+                         x-transition:enter-start="opacity-0 -translate-y-1"
+                         x-transition:enter-end="opacity-100 translate-y-0"
+                         x-transition:leave="transition ease-in duration-150 motion-reduce:transition-none"
+                         x-transition:leave-start="opacity-100 translate-y-0"
+                         x-transition:leave-end="opacity-0 -translate-y-1"
+                         class="mt-3 space-y-3 pt-3 border-t border-slate-100">
                         <div>
                             <label class="block text-xs font-medium text-slate-600 mb-1">Judul Kegiatan / Progres</label>
                             <input type="text" name="title" value="{{ old('title') }}"
@@ -331,12 +369,15 @@
                 </div>
 
                 {{-- Tombol Simpan Terpadu --}}
-                <button type="submit"
-                        class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary-600 px-5 py-3 text-sm font-bold text-white shadow-md shadow-primary-200 hover:bg-primary-700 active:scale-[0.99] transition-all">
-                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                <button type="submit" :disabled="submitting"
+                        class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary-600 px-5 py-3 text-sm font-semibold text-white shadow-xs hover:bg-primary-700 active:scale-[0.98] disabled:opacity-70 transition-all duration-150">
+                    <svg x-show="!submitting" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
                     </svg>
-                    Simpan &amp; Perbarui Aspirasi
+                    <svg x-show="submitting" x-cloak class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                    </svg>
+                    <span x-text="submitting ? 'Menyimpan pembaruan...' : 'Simpan & Perbarui Aspirasi'">Simpan &amp; Perbarui Aspirasi</span>
                 </button>
             </form>
         </x-card>
@@ -367,5 +408,21 @@
             </dl>
         </x-card>
     </div>
+
+    {{-- Modal Lightbox Pratinjau Foto --}}
+    <x-modal id="admin-photo-lightbox" title="Pratinjau Foto" size="xl">
+        <div class="flex flex-col items-center gap-3">
+            <img :src="activePhoto" :alt="activePhotoName" class="max-h-[70vh] w-auto rounded-xl object-contain bg-slate-50">
+            <div class="flex w-full items-center justify-between text-xs text-slate-500">
+                <span class="truncate font-medium text-slate-700" x-text="activePhotoName"></span>
+                <a :href="activePhoto" target="_blank" class="font-semibold text-primary-600 hover:text-primary-700 inline-flex items-center gap-1">
+                    Buka di tab baru
+                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+    </x-modal>
 </div>
 @endsection

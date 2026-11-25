@@ -1,5 +1,5 @@
 @props(['title' => null, 'subtitle' => null, 'padding' => true, 'class' => ''])
-<div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-100 {{ $class }}">
+<div class="rounded-2xl bg-white border border-slate-200/75 shadow-[0_1px_2px_rgba(15,23,42,0.03)] {{ $class }}">
     @if($title)
         <div class="flex items-center justify-between border-b border-slate-100 px-5 py-4">
             <div>

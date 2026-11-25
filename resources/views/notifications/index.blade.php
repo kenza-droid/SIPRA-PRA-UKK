@@ -12,16 +12,21 @@
     </p>
     @if($notifications->total() > 0)
         <form method="POST"
+              x-data="{ marking: false }"
+              @submit="marking = true"
               action="{{ auth()->user()->isAdmin()
                   ? route('admin.notifications.read-all')
                   : route('siswa.notifications.read-all') }}">
             @csrf
-            <button type="submit"
-                    class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-600 shadow-sm hover:bg-slate-50 transition-colors">
-                <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <button type="submit" :disabled="marking"
+                    class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-600 shadow-xs hover:bg-slate-50 active:scale-[0.98] disabled:opacity-70 transition-all duration-150">
+                <svg x-show="!marking" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
                 </svg>
-                Tandai Semua Dibaca
+                <svg x-show="marking" x-cloak class="h-3.5 w-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                </svg>
+                <span x-text="marking ? 'Memproses...' : 'Tandai Semua Dibaca'">Tandai Semua Dibaca</span>
             </button>
         </form>
     @endif
@@ -33,10 +38,10 @@
         description="Semua notifikasi akan muncul di sini."
         icon="bell" />
 @else
-    <div class="space-y-2">
+    <div class="space-y-2.5">
         @foreach($notifications as $notif)
-            <div class="flex items-start gap-4 rounded-2xl border p-4 transition-all
-                {{ $notif->is_read ? 'border-slate-100 bg-white' : 'border-primary-100 bg-primary-50/40 shadow-sm' }}">
+            <div class="flex items-start gap-4 rounded-2xl border p-4 transition-all duration-150 hover:border-slate-300/80
+                {{ $notif->is_read ? 'border-slate-200/75 bg-white' : 'border-indigo-200/80 bg-indigo-50/40' }}">
 
                 {{-- Icon --}}
                 <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl

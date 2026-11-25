@@ -47,7 +47,9 @@ Route::middleware(['auth', 'role:siswa'])
             Route::get('/', [SiswaComplaintController::class, 'index'])->name('index');
             Route::get('/buat', [SiswaComplaintController::class, 'create'])->name('create');
             Route::post('/', [SiswaComplaintController::class, 'store'])->name('store');
+            Route::delete('/bulk-delete', [SiswaComplaintController::class, 'bulkDestroy'])->name('bulk-destroy');
             Route::get('/{complaint}', [SiswaComplaintController::class, 'show'])->name('show');
+            Route::delete('/{complaint}', [SiswaComplaintController::class, 'destroy'])->name('destroy');
         });
 
         // Profil
@@ -94,6 +96,7 @@ Route::middleware(['auth', 'role:admin'])
 
         // Data Siswa
         Route::get('/siswa', [SiswaController::class, 'index'])->name('siswa');
+        Route::post('/siswa', [SiswaController::class, 'store'])->name('siswa.store');
 
         // Notifikasi (admin juga pakai notif)
         Route::prefix('notifikasi')->name('notifications.')->group(function () {

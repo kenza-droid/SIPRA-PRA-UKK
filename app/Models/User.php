@@ -16,6 +16,7 @@ class User extends Authenticatable
         'email',
         'nisn',
         'class',
+        'phone',
         'password',
         'role',
         'avatar',
@@ -49,7 +50,14 @@ class User extends Authenticatable
     public function getAvatarUrlAttribute(): string
     {
         if ($this->avatar) {
-            return asset('storage/'.$this->avatar);
+            if (filter_var($this->avatar, FILTER_VALIDATE_URL)) {
+                return $this->avatar;
+            }
+
+            $avatar = ltrim($this->avatar, '/');
+            $avatar = preg_replace('#^(public/|storage/)+#', '', $avatar);
+
+            return '/storage/' . $avatar;
         }
         // Generate initials-based avatar URL
         $initials = collect(explode(' ', $this->name))

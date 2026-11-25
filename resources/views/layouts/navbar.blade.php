@@ -1,4 +1,4 @@
-<header class="sticky top-0 z-20 flex h-16 items-center gap-4 border-b border-slate-100 bg-white/95 backdrop-blur px-4 sm:px-6 shadow-sm">
+<header class="sticky top-0 z-20 flex h-16 items-center gap-4 border-b border-slate-200/70 bg-white/85 backdrop-blur-md px-4 sm:px-6">
 
     {{-- Mobile hamburger --}}
     <button @click="sidebarOpen = !sidebarOpen"
@@ -34,28 +34,48 @@
 
             {{-- Dropdown --}}
             <div x-show="open" x-cloak
-                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter="transition ease-out duration-200 motion-reduce:transition-none"
                  x-transition:enter-start="opacity-0 scale-95 translate-y-1"
                  x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-                 x-transition:leave="transition ease-in duration-150"
+                 x-transition:leave="transition ease-in duration-150 motion-reduce:transition-none"
                  x-transition:leave-start="opacity-100 scale-100 translate-y-0"
                  x-transition:leave-end="opacity-0 scale-95 translate-y-1"
-                 class="absolute right-0 mt-2 w-80 origin-top-right rounded-2xl bg-white shadow-xl ring-1 ring-black/5 focus:outline-none">
+                 class="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] origin-top-right rounded-2xl bg-white border border-slate-200/80 shadow-lg shadow-slate-900/5 focus:outline-none">
 
                 <div class="flex items-center justify-between border-b border-slate-100 px-4 py-3">
                     <p class="text-sm font-semibold text-slate-800">Notifikasi</p>
                     <template x-if="unreadCount > 0">
-                        <form method="POST" action="{{ auth()->user()->isAdmin() ? route('admin.notifications.read-all') : route('siswa.notifications.read-all') }}">
+                        <form method="POST" action="{{ auth()->user()->isAdmin() ? route('admin.notifications.read-all') : route('siswa.notifications.read-all') }}"
+                              x-data="{ marking: false }" @submit="marking = true">
                             @csrf
-                            <button type="submit" class="text-xs font-medium text-primary-600 hover:text-primary-700">Tandai semua dibaca</button>
+                            <button type="submit" :disabled="marking"
+                                    class="inline-flex items-center gap-1 text-xs font-medium text-primary-600 hover:text-primary-700 disabled:opacity-60 transition-opacity">
+                                <svg x-show="marking" x-cloak class="h-3 w-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                                </svg>
+                                <span x-text="marking ? 'Memproses...' : 'Tandai semua dibaca'"></span>
+                            </button>
                         </form>
                     </template>
                 </div>
 
                 <div class="max-h-80 overflow-y-auto scrollbar-thin">
                     <template x-if="loading">
-                        <div class="flex items-center justify-center py-8">
-                            <svg class="h-5 w-5 animate-spin text-primary-500" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                        <div class="divide-y divide-slate-50 px-4 py-2">
+                            <div class="flex gap-3 py-3">
+                                <div class="h-8 w-8 rounded-full skeleton-shimmer flex-shrink-0"></div>
+                                <div class="flex-1 space-y-2">
+                                    <div class="h-3 w-32 rounded skeleton-shimmer"></div>
+                                    <div class="h-3 w-48 rounded skeleton-shimmer"></div>
+                                </div>
+                            </div>
+                            <div class="flex gap-3 py-3">
+                                <div class="h-8 w-8 rounded-full skeleton-shimmer flex-shrink-0"></div>
+                                <div class="flex-1 space-y-2">
+                                    <div class="h-3 w-28 rounded skeleton-shimmer"></div>
+                                    <div class="h-3 w-44 rounded skeleton-shimmer"></div>
+                                </div>
+                            </div>
                         </div>
                     </template>
                     <template x-if="!loading && notifications.length === 0">

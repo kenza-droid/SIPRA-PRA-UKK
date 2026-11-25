@@ -2,26 +2,20 @@
 @php
     $pct = max(0, min(100, (int) $percentage));
     $color = match(true) {
-        $pct >= 100 => 'bg-emerald-500',
-        $pct >= 75  => 'bg-blue-500',
-        $pct >= 50  => 'bg-indigo-500',
-        $pct >= 25  => 'bg-amber-500',
-        default     => 'bg-slate-300',
+        $pct >= 100 => 'bg-emerald-500/90',
+        $pct >= 75  => 'bg-sky-500/90',
+        $pct >= 50  => 'bg-indigo-500/90',
+        $pct >= 25  => 'bg-amber-400/90',
+        default     => 'bg-indigo-400/75',
     };
-    $trackColor = match(true) {
-        $pct >= 100 => 'bg-emerald-100',
-        $pct >= 75  => 'bg-blue-100',
-        $pct >= 50  => 'bg-indigo-100',
-        $pct >= 25  => 'bg-amber-100',
-        default     => 'bg-slate-100',
-    };
-    $height = $size === 'lg' ? 'h-3' : ($size === 'sm' ? 'h-1.5' : 'h-2');
+    $trackColor = 'bg-slate-100';
+    $height = $size === 'lg' ? 'h-2.5' : ($size === 'sm' ? 'h-1.5' : 'h-2');
 @endphp
 <div class="w-full">
     @if($showLabel)
         <div class="mb-1.5 flex items-center justify-between">
-            <span class="text-xs font-medium text-slate-500">Progress</span>
-            <span class="text-xs font-bold text-slate-700">{{ $pct }}%</span>
+            <span class="text-xs font-medium text-slate-500">Progres</span>
+            <span class="text-xs font-semibold text-slate-700 tabular-nums">{{ $pct }}%</span>
         </div>
     @endif
     <div class="w-full overflow-hidden rounded-full {{ $trackColor }} {{ $height }}">
